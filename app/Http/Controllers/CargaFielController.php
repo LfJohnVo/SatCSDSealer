@@ -87,7 +87,6 @@ class CargaFielController extends Controller
                 'SerialNumber' => $certificado->serialNumber()->bytes(),
             );
 
-
             PDF::setSignature($request->file('cer'), $pemac, $request->contra, '', 2, $info);
             PDF::SetFont('helvetica', '', 12);
             PDF::SetTitle('Hello World');
