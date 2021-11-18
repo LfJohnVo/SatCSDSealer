@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CargaFiel;
 use Illuminate\Http\Request;
 use PhpCfdi\Credentials\Credential;
+use PhpCfdi\Credentials\PublicKey;
 use PDF;
 
 class CargaFielController extends Controller
@@ -50,22 +51,71 @@ class CargaFielController extends Controller
 
         // objeto certificado
         $certificado = $fiel->certificate();
-        echo '<hr>';
-        echo '<pre>';
-        echo $certificado->rfc(), PHP_EOL; // el RFC del certificado
-        echo $certificado->legalName(), PHP_EOL; // el nombre del propietario del certificado
-        echo $certificado->branchName(), PHP_EOL; // el nombre de la sucursal (en CSD, en FIEL está vacía)
-        echo $certificado->serialNumber()->bytes(), PHP_EOL; // número de serie del certificado
-        echo '</pre>';
-        echo '<hr>';
 
-        PDF::SetTitle('Hello World');
+        if ($certificado->satType()->isCsd()) {
+            echo 'CSD', PHP_EOL;
+        } elseif ($certificado->satType()->isFiel()) {
+            echo '<hr>';
+            echo '<pre>';
+            echo $certificado->name();
+            echo $certificado->rfc(), PHP_EOL; // el RFC del certificado
+            echo $certificado->legalName(), PHP_EOL; // el nombre del propietario del certificado
+            echo $certificado->branchName(), PHP_EOL; // el nombre de la sucursal (en CSD, en FIEL está vacía)
+            echo $certificado->serialNumber()->bytes(), PHP_EOL; // número de serie del certificado
+            echo '</pre>';
+            echo '<hr>';
+
+            // objeto publicKey
+            $publicKey = explode('/', $certificado->name());
+            $pem = 'llave.pem';
+            $pemac = file_put_contents($pem, $certificado->pem());
+
+            //$contenido = file_get_contents($pemac);
+            //dd($contenido);
+
+            $state = substr($publicKey[4], -2, 2);
+            $email = substr($publicKey[5], 13);
+            $curp = substr($publicKey[7], 13);
+
+            // set additional information in the signature
+            $info = array(
+                'Name' => $certificado->legalName(),
+                'Location' => $state,
+                'Rfc' => $certificado->rfc(),
+                'ContactInfo' => $email,
+                'Curp' => $curp,
+                'SerialNumber' => $certificado->serialNumber()->bytes(),
+            );
+
+
+            PDF::setSignature($request->file('cer'), $pemac, $request->contra, '', 2, $info);
+            PDF::SetFont('helvetica', '', 12);
+            PDF::SetTitle('Hello World');
+            PDF::AddPage();
+            // print a line of text
+            //$text = view('tcpdf');
+            // add view content
+            PDF::writeHTML('Hello Worldasdasdad', true, 0, true, 0);
+            // add image for signature
+            PDF::Image('https://silent4business.com/wp-content/uploads/2019/06/Silent4Business-Logo-Color.png', 180, 60, 15, 15, 'PNG');
+            // define active area for signature appearance
+            PDF::setSignatureAppearance(180, 60, 15, 15);
+            // save pdf file
+            PDF::Output(public_path('sellado.pdf'), 'D');
+            PDF::reset();
+
+            dd('pdf created');
+        } else {
+            echo 'otro', PHP_EOL;
+        }
+
+        /*PDF::SetTitle('Hello World');
         PDF::AddPage();
         PDF::Write(0, 'Hello World');
         PDF::AddPage();
         PDF::WriteHTML('Hello Worldasdasdad', true, 0, true, 0);
         PDF::Output(public_path('hello_world.pdf'), 'F');
-        PDF::reset();
+        PDF::reset();*/
 
 
 
