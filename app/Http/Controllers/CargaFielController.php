@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use PDF;
+use Carbon\Carbon;
 use Dompdf\Dompdf;
+use Dompdf\Options;
 use App\Models\CargaFiel;
 use Illuminate\Http\Request;
 use PhpCfdi\Credentials\PublicKey;
@@ -46,6 +48,8 @@ class CargaFielController extends Controller
             $pemKeyFile = 'file://' . $request->key;
             $passPhrase = $request->contra;
             $contractName = "SilentPrueba";
+            $name = $request->file('pdf')->getClientOriginalName();
+            $path = $request->file('pdf')->move('FIEL', $name);
 
             try {
                 $fiel = Credential::openFiles($cerFile, $pemKeyFile, $passPhrase);
@@ -105,13 +109,29 @@ class CargaFielController extends Controller
                     'SerialNumber' => $certificado->serialNumber()->bytes(),
                 );
 
+                \QrCode::size(500)
+                    ->format('png')
+                    ->generate(base64_encode($signature), public_path(time().$certificado->rfc().'.png'));
+
+                // Get the image and convert into string
+                $img = file_get_contents(
+                    public_path(time().$certificado->rfc().'.png')
+                );
+
+                $base64 = base64_encode($img);
+                $fTimbrado = $mytime = Carbon::now();
+
                 $html = '';
                 $html .= '
                     <table>
                             <tbody>
                                 <tr>
-                                    <td><strong>Nombre: </strong>' . $certificado->legalName() . '</td>
-                                    <td><img src="" style="width:30%;" alt=""></td>
+                                    <td><strong>Firmante: </strong>' . $certificado->legalName() . '</td>
+                                    <td><img src="data:image/png;base64, ' . $base64 . '" style="width: 140px; padding-left: 30px; padding-top: 30px;"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Folio: </strong>8857</td>
+                                    <td></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Nombre legal: </strong>' . $certificado->legalName() . '</td>
@@ -126,7 +146,11 @@ class CargaFielController extends Controller
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>No. de Serie SCD: </strong>' . $str . '</td>
+                                    <td><strong>No. de Serie CSD: </strong>' . $str . '</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha y hora de firma del documento: </strong>' . $mytime->toDateTimeString() . '</td>
                                     <td></td>
                                 </tr>
                                 <tr>
@@ -138,20 +162,23 @@ class CargaFielController extends Controller
                         <table>
                             <tbody>
                                 <tr>
-                                    <td><textarea class="form-control" style=" height: 120px;">' . wordwrap(base64_encode($signature), 75, "<br>" ,TRUE) . '</textarea></td>
+                                    <td><textarea class="form-control" style=" height: 120px;">' . wordwrap(base64_encode($signature), 75, "<br>", TRUE) . '</textarea></td>
                                 </tr>
                             </tbody>
                         </table>
                     ';
-
-                $dompdf = new Dompdf();
+                // echo $html;
+                // dd($html);
+                $options = new Options();
+                $options->setIsRemoteEnabled(true);
+                $dompdf = new Dompdf($options);
                 $dompdf->loadHtml($html);
                 $dompdf->setPaper('letter', 'portrait');
                 $dompdf->render();
                 file_put_contents('sellado.pdf', $dompdf->output());
                 //$dompdf->stream('FicheroEjemplo.pdf');
                 $oMerger = PDFMerger::init();
-                $oMerger->addPDF('dhl.pdf', 'all');
+                $oMerger->addPDF('89191.pdf', 'all');
                 $oMerger->addPDF('sellado.pdf', 'all');
                 $oMerger->merge();
                 $oMerger->save('merged_result.pdf');

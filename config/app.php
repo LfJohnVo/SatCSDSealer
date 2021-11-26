@@ -174,7 +174,9 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        Webklex\PDFMerger\Providers\PDFMergerServiceProvider::class
+        Webklex\PDFMerger\Providers\PDFMergerServiceProvider::class,
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class
+
 
     ],
 
@@ -230,7 +232,8 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'PDF' => Elibyy\TCPDF\Facades\TCPDF::class,
-        'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class
+        'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class,
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class
 
     ],
 
