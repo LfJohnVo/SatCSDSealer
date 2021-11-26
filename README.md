@@ -29,6 +29,14 @@ Laravel CSD document sealer
 ## Description
 
 This project can seal any pdf document with CSD (FIEL SAT MX) at NOM-151
+Este proyecto ha sido creado para poder trabajar con los archivos CSD y FIEL del SAT. 
+Simplificando el proceso de firmado dentro de documentos PDF dentro de la NOM-151
+
+El CSD (Certificado de Sello Digital) es utilizado para firmar Comprobantes Fiscales Digitales.
+
+La FIEL (o eFirma) es utilizada para firmar electrónicamente documentos (generalmente usando XML-SEC) y está reconocida por el gobierno mexicano como una manera de firma legal de una persona física o moral.
+
+Utilizando phpcfdi/credentials: Con esta librería no es necesario convertir los archivos generados por el SAT a otro formato, se pueden utilizar tal y como el SAT los entrega sin alterar la integridad de los sellos.
 
 ## Installation
 
