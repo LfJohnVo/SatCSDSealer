@@ -9,10 +9,22 @@ Laravel CSD document sealer
 
 ## Version Guidance
 
-| Version | Laravel version       |  Status         | Branch                                            |
-|---------|-----------------------|-----------------|--------|-----------------------------------------------------|
-|
-| 0.1     | >= 7.0                | Develop          | main   |         |
+<table>
+  <tbody>
+    <tr>
+      <td>Version</td>
+      <th>Laravel Version</th>
+      <th>Status</th>
+      <th>Branch</th>
+    </tr>
+    <tr>
+      <th>0.1</th>
+      <td>>= 7.0</td>
+      <td>Develop</td>
+      <td>Main</td>
+    </tr>
+  </tbody>
+</table>
 
 ## Description
 
