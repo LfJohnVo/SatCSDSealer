@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use PDF;
+use File;
+use Response;
 use Throwable;
 use Carbon\Carbon;
 use Dompdf\Dompdf;
@@ -12,6 +14,7 @@ use Illuminate\Http\Request;
 use PhpCfdi\Credentials\PublicKey;
 use PhpCfdi\Credentials\Credential;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Redirect;
 use Webklex\PDFMerger\Facades\PDFMergerFacade as PDFMerger;
 
 class CargaFielController extends Controller
@@ -31,7 +34,7 @@ class CargaFielController extends Controller
             $contractName = "SilentPrueba";
             $input_file = $request->file('pdf')->getClientOriginalName();
             $name = pathinfo($input_file, PATHINFO_FILENAME);
-            $path = $request->file('pdf')->move('FIEL', $name. '.pdf');
+            $path = $request->file('pdf')->move('FIEL', $name . '.pdf');
 
             try {
                 $fiel = Credential::openFiles($cerFile, $pemKeyFile, $passPhrase);
@@ -150,17 +153,17 @@ class CargaFielController extends Controller
                 $dompdf->loadHtml($html);
                 $dompdf->setPaper('letter', 'portrait');
                 $dompdf->render();
-                file_put_contents($certificado->rfc().'-sellado.pdf', $dompdf->output());
+                file_put_contents($certificado->rfc() . '-sellado.pdf', $dompdf->output());
                 $oMerger = PDFMerger::init();
-                $oMerger->addPDF('FIEL/'.$name.'.pdf', 'all');
-                $oMerger->addPDF($certificado->rfc().'-sellado.pdf', 'all');
+                $oMerger->addPDF('FIEL/' . $name . '.pdf', 'all');
+                $oMerger->addPDF($certificado->rfc() . '-sellado.pdf', 'all');
                 $oMerger->merge();
-                $oMerger->save('Sellados/'.$name.'-sellado.pdf');
-                unlink($certificado->rfc().'-sellado.pdf');
-                unlink('FIEL/'.$name.'.pdf');
-                unlink($QrName.'.png');
+                $oMerger->save('Sellados/' . $name . '-sellado.pdf');
+                unlink($certificado->rfc() . '-sellado.pdf');
+                unlink('FIEL/' . $name . '.pdf');
+                unlink($QrName . '.png');
                 notify()->success('Documento sellado correctamente');
-                return redirect()->back();
+                return Redirect::to('/');
             } else {
                 notify()->error('El certificado no es correcto');
                 return redirect()->back();
@@ -169,6 +172,13 @@ class CargaFielController extends Controller
             notify()->error('No se han cargado los documentos necesarios');
             return redirect()->back();
         }
+    }
+
+    public function download(Request $request)
+    {
+        //Define header information
+        $filepath = public_path('Sellados/'.$request->file);
+        return Response::download($filepath);
     }
 
     public function strToHex($string)
