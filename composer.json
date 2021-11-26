@@ -12,6 +12,7 @@
         "laravel/framework": "^8.65",
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
+        "mckenziearts/laravel-notify": "^2.2",
         "phpcfdi/credentials": "^1.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "webklex/laravel-pdfmerger": "^1.3"
