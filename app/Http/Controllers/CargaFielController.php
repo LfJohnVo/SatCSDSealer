@@ -17,26 +17,6 @@ use Webklex\PDFMerger\Facades\PDFMergerFacade as PDFMerger;
 class CargaFielController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -49,8 +29,9 @@ class CargaFielController extends Controller
             $pemKeyFile = 'file://' . $request->key;
             $passPhrase = $request->contra;
             $contractName = "SilentPrueba";
-            $name = $request->file('pdf')->getClientOriginalName();
-            $path = $request->file('pdf')->move('FIEL', $name);
+            $input_file = $request->file('pdf')->getClientOriginalName();
+            $name = pathinfo($input_file, PATHINFO_FILENAME);
+            $path = $request->file('pdf')->move('FIEL', $name. '.pdf');
 
             try {
                 $fiel = Credential::openFiles($cerFile, $pemKeyFile, $passPhrase);
@@ -86,16 +67,6 @@ class CargaFielController extends Controller
                     $str = 'N/A';
                 }
 
-                echo '<hr>';
-                echo '<pre>';
-                echo $certificado->name();
-                echo $certificado->rfc(), PHP_EOL; // el RFC del certificado
-                echo $certificado->legalName(), PHP_EOL; // el nombre del propietario del certificado
-                echo $certificado->branchName(), PHP_EOL; // el nombre de la sucursal (en CSD, en FIEL está vacía)
-                echo $certificado->serialNumber()->bytes(), PHP_EOL; // número de serie del certificado
-                echo '</pre>';
-                echo '<hr>';
-
                 // objeto publicKey
                 $publicKey = explode('/', $certificado->name());
                 $state = substr($publicKey[4], -2, 2);
@@ -112,13 +83,14 @@ class CargaFielController extends Controller
                     'SerialNumber' => $certificado->serialNumber()->bytes(),
                 );
 
+                $QrName = time() . $certificado->rfc();
+
                 \QrCode::size(500)
                     ->format('png')
-                    ->generate(base64_encode($signature), public_path(time() . $certificado->rfc() . '.png'));
+                    ->generate(base64_encode($signature), public_path($QrName . '.png'));
 
-                // Get the image and convert into string
                 $img = file_get_contents(
-                    public_path(time() . $certificado->rfc() . '.png')
+                    public_path($QrName . '.png')
                 );
 
                 $base64 = base64_encode($img);
@@ -178,13 +150,15 @@ class CargaFielController extends Controller
                 $dompdf->loadHtml($html);
                 $dompdf->setPaper('letter', 'portrait');
                 $dompdf->render();
-                file_put_contents('sellado.pdf', $dompdf->output());
-                //$dompdf->stream('FicheroEjemplo.pdf');
+                file_put_contents($certificado->rfc().'-sellado.pdf', $dompdf->output());
                 $oMerger = PDFMerger::init();
-                $oMerger->addPDF('89191.pdf', 'all');
-                $oMerger->addPDF('sellado.pdf', 'all');
+                $oMerger->addPDF('FIEL/'.$name.'.pdf', 'all');
+                $oMerger->addPDF($certificado->rfc().'-sellado.pdf', 'all');
                 $oMerger->merge();
-                $oMerger->save('merged_result.pdf');
+                $oMerger->save('Sellados/'.$name.'-sellado.pdf');
+                unlink($certificado->rfc().'-sellado.pdf');
+                unlink('FIEL/'.$name.'.pdf');
+                unlink($QrName.'.png');
                 notify()->success('Documento sellado correctamente');
                 return redirect()->back();
             } else {
