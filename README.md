@@ -6,6 +6,7 @@ Laravel CSD document sealer
 <img src="captura.png">
 </p>
 <hr>
+
 ## Version Guidance
 
 | Version | Laravel version       |  Status         | Branch                                            |
