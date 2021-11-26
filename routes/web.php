@@ -19,3 +19,4 @@ Route::get('/', function () {
 });
 
 Route::resource('carga-fiel', CargaFielController::class);
+Route::post('download', [CargaFielController::class , 'download'])->name('download');
