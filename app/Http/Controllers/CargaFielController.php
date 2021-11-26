@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use PDF;
+use Throwable;
 use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -43,7 +44,7 @@ class CargaFielController extends Controller
      */
     public function store(Request $request)
     {
-        if ($request->cer && $request->key && $request->contra) {
+        if ($request->cer && $request->key && $request->contra && $request->pdf) {
             $cerFile = 'file://' . $request->cer;
             $pemKeyFile = 'file://' . $request->key;
             $passPhrase = $request->contra;
@@ -53,13 +54,15 @@ class CargaFielController extends Controller
 
             try {
                 $fiel = Credential::openFiles($cerFile, $pemKeyFile, $passPhrase);
-            } catch (Exception $exception) {
-                return redirect()->back()->with('warning', 'Parece que el password no es correcto!');
+            } catch (Throwable $exception) {
+                notify()->error('La contraseña no corresponde a este certificado');
+                return redirect()->back();
             }
             $certificado = $fiel->certificate();
 
             if ($certificado->satType()->isCsd()) {
-                echo 'CSD', PHP_EOL;
+                notify()->success('El certificado es un CSD normal');
+                return redirect()->back();
             } elseif ($certificado->satType()->isFiel()) {
                 $sourceString = $contractName;
                 // alias de privateKey/sign/verify
@@ -79,7 +82,7 @@ class CargaFielController extends Controller
                 try {
                     $data = $certificado->serialNumber()->bytes();
                     $str = $this->strToHex($data);
-                } catch (Exception $exception) {
+                } catch (Throwable $exception) {
                     $str = 'N/A';
                 }
 
@@ -111,11 +114,11 @@ class CargaFielController extends Controller
 
                 \QrCode::size(500)
                     ->format('png')
-                    ->generate(base64_encode($signature), public_path(time().$certificado->rfc().'.png'));
+                    ->generate(base64_encode($signature), public_path(time() . $certificado->rfc() . '.png'));
 
                 // Get the image and convert into string
                 $img = file_get_contents(
-                    public_path(time().$certificado->rfc().'.png')
+                    public_path(time() . $certificado->rfc() . '.png')
                 );
 
                 $base64 = base64_encode($img);
@@ -182,38 +185,15 @@ class CargaFielController extends Controller
                 $oMerger->addPDF('sellado.pdf', 'all');
                 $oMerger->merge();
                 $oMerger->save('merged_result.pdf');
-
-                //Firma con tcpdf
-                /*$pem = 'llave.pem';
-            $pemac = file_put_contents($pem, $certificado->pem());
-            //pem to crt
-            $comando = 'openssl req -x509 -nodes -days 365000 -newkey rsa:1024 -keyout tcpdf.crt -out tcpdf.crt';
-            //dd($comando);
-            exec($comando);*/
-                // set certificate file
-                /*$certificate = 'file://' . realpath('tcpdf.crt');
-            PDF::setSignature($certificate, $certificate, 'tcpdfdemo', '', 2, $info);
-            PDF::SetFont('helvetica', '', 12);
-            PDF::SetTitle('Hello World');
-            PDF::AddPage();
-            // print a line of text
-            //$text = view('tcpdf');
-            // add view content
-            PDF::writeHTML('Hello Worldasdasdad', true, 0, true, 0);
-            // add image for signature
-            PDF::Image('https://silent4business.com/wp-content/uploads/2019/06/Silent4Business-Logo-Color.png', 180, 60, 15, 15, 'PNG');
-            // define active area for signature appearance
-            PDF::setSignatureAppearance(180, 60, 15, 15);
-            ob_end_clean();
-            // save pdf file
-            PDF::Output('sellado1.pdf', 'D');*/
-
-                dd('pdf created');
+                notify()->success('Documento sellado correctamente');
+                return redirect()->back();
             } else {
-                echo 'otro', PHP_EOL;
+                notify()->error('El certificado no es correcto');
+                return redirect()->back();
             }
         } else {
-            return redirect()->back()->with('error', 'No se han cargado los datos necesario');
+            notify()->error('No se han cargado los documentos necesarios');
+            return redirect()->back();
         }
     }
 

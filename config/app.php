@@ -175,8 +175,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         Webklex\PDFMerger\Providers\PDFMergerServiceProvider::class,
-        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class
-
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
+        Mckenziearts\Notify\LaravelNotifyServiceProvider::class
 
     ],
 
