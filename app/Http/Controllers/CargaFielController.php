@@ -45,6 +45,44 @@ class CargaFielController extends Controller
             $certificado = $fiel->certificate();
 
             if ($certificado->satType()->isCsd()) {
+                // $sourceString = $contractName;
+                // // alias de privateKey/sign/verify
+                // $signature = $fiel->sign($sourceString);
+                // //echo base64_encode($signature), PHP_EOL;
+                // // alias de certificado/publicKey/verify
+                // $verify = $fiel->verify($sourceString, $signature);
+                // //var_dump($verify); // bool(true)
+
+                // // objeto publicKey
+                // $publicKey = explode('/', $certificado->name());
+                // $country = substr($publicKey[1], -2, 2);
+                // $state = substr($publicKey[2], 3);
+                // $localityName = substr($publicKey[3], 2);
+                // $organizacion = substr($publicKey[4], 2);
+                // $OrgUnitName = substr($publicKey[5], 3);
+                // $commonName = substr($publicKey[6], 3);
+                // $email = substr($publicKey[7], 13);
+
+                // // // set additional information in the signature
+                // // $info = array(
+                // //     'Name' => $certificado->legalName(),
+                // //     'Location' => $state,
+                // //     'Rfc' => $certificado->rfc(),
+                // //     'ContactInfo' => $email,
+                // //     'Curp' => $curp,
+                // //     'SerialNumber' => $certificado->serialNumber()->bytes(),
+                // // );
+                // // set additional information in the signature
+                // $info = array(
+                //     'Name' => $commonName,
+                //     'Estado' => $state,
+                //     'País' => $country,
+                //     'Location' => $localityName,
+                //     'ContactInfo' => $email,
+                //     'Organizacion' => $organizacion,
+                //     'UnidadOrganizacion' => $OrgUnitName,
+                // );
+                // dd($info);
                 notify()->success('El certificado es un CSD normal');
                 return redirect()->back();
             } elseif ($certificado->satType()->isFiel()) {
@@ -177,7 +215,7 @@ class CargaFielController extends Controller
     public function download(Request $request)
     {
         //Define header information
-        $filepath = public_path('Sellados/'.$request->file);
+        $filepath = public_path('Sellados/' . $request->file);
         return Response::download($filepath);
     }
 
@@ -188,5 +226,14 @@ class CargaFielController extends Controller
             $hex .= dechex(ord($string[$i]));
         }
         return $hex;
+    }
+
+    public function hexToStr($hex)
+    {
+        $string = '';
+        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
+            $string .= chr(hexdec($hex[$i] . $hex[$i + 1]));
+        }
+        return $string;
     }
 }
