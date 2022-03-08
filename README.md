@@ -18,8 +18,8 @@ Laravel CSD document sealer
       <th>Branch</th>
     </tr>
     <tr>
-      <th>0.1</th>
-      <td>>= 7.0</td>
+      <th>0.2</th>
+      <td>>= 9.0</td>
       <td>Develop</td>
       <td>Main</td>
     </tr>
